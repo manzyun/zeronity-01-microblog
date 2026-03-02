@@ -1,0 +1,31 @@
+---
+title: Class Structure
+---
+
+classDiagram
+    class Actor {
+        +UUID id
+        +String username
+        +String preferredUsername
+        +String publicKey
+        +createNote(content)
+    }
+
+    class Note {
+        +UUID id
+        +UUID authorId
+        +String content
+        +DateTime published
+        +toActivity()
+    }
+
+    class Activity {
+        +UUID id
+        +String type (Create/Follow/Delete)
+        +Actor actor
+        +Object object
+    }
+
+    Actor "1" -- "*" Note : creates
+    Activity "1" -- "1" Actor : performed_by
+    Activity "1" -- "1" Note : targets
