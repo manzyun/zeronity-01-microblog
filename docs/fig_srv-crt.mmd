@@ -8,6 +8,19 @@ sequenceDiagram
     participant db@{ "type" : "database" } as Storage
     participant other@{ "type" : "boundary" } as Other ActivityPub Server
 
+    rect rgb(255, 255, 200)
+        Note over svelte, other: 新規ユーザー登録 (Registration)
+        user->>+svelte: 登録情報を入力 (username, password等)
+        svelte->>+flask: 登録リクエスト (POST /api/auth/register)
+        flask->>db: ユーザーの存在確認
+        db-->>flask: OK
+        flask->>flask: 秘密鍵・公開鍵ペアの生成 (RSA)
+        flask->>db: 新規Actorの保存 (PublicKey含む)
+        db-->>flask: 保存完了
+        flask-->>-svelte: HTTP 201 Created
+        svelte-->>-user: 登録成功表示・ログイン画面へ
+    end
+
     Note over user,db: ユーザーが投稿するにはログインを必須とする
     user->>+svelte: ログイン情報を入力
     svelte->>+flask: ログインリクエスト (POST /api/auth/login)
