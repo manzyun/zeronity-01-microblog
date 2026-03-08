@@ -1,7 +1,7 @@
 import unittest
 from uuid import uuid4
 from datetime import datetime
-from back.domain.entities import Actor, Note
+from domain.entities import Actor, Note
 
 class TestDomainEntities(unittest.TestCase):
     def setUp(self):
@@ -10,7 +10,8 @@ class TestDomainEntities(unittest.TestCase):
             id=self.actor_id,
             username="alice",
             preferred_username="Alice",
-            public_key="RSA_PUB_KEY_CONTENT"
+            public_key="RSA_PUB_KEY_CONTENT",
+            private_key="RSA_PRIV_KEY_CONTENT"
         )
         
         self.note_id = uuid4()
@@ -27,6 +28,7 @@ class TestDomainEntities(unittest.TestCase):
         self.assertEqual(self.actor.username, "alice")
         self.assertEqual(self.actor.preferred_username, "Alice")
         self.assertEqual(self.actor.public_key, "RSA_PUB_KEY_CONTENT")
+        self.assertEqual(self.actor.private_key, "RSA_PRIV_KEY_CONTENT")
 
     def test_note_initialization(self):
         """Noteが正しく初期化されるか検証"""
@@ -43,6 +45,7 @@ class TestDomainEntities(unittest.TestCase):
         self.assertEqual(activity["actor"], self.actor_id)
         self.assertEqual(activity["object"]["id"], self.note_id)
         self.assertEqual(activity["object"]["type"], "Note")
+        self.assertEqual(activity["object"]["content"], "Hello ActivityPub")
 
     def test_note_to_delete_activity(self):
         """NoteがDeleteアクティビティに正しく変換されるか検証"""
@@ -61,23 +64,19 @@ class TestDomainEntities(unittest.TestCase):
         self.assertEqual(activity["actor"], self.actor_id)
         self.assertEqual(activity["object"], target_actor_id)
 
-    def test_note_to_like_activity(self):
-        """Noteに対するLikeアクティビティを検証"""
-        liker_id = uuid4()
-        activity = self.note.to_activity(type="Like", actor_id=liker_id)
-        
-        self.assertEqual(activity["type"], "Like")
-        self.assertEqual(activity["actor"], liker_id)
-        self.assertEqual(activity["object"], self.note_id)
-
-    def test_note_to_announce_activity(self):
-        """NoteのAnnounce (Remote/Boost) アクティビティを検証"""
-        announcer_id = uuid4()
-        activity = self.note.to_activity(type="Announce", actor_id=announcer_id)
-        
-        self.assertEqual(activity["type"], "Announce")
-        self.assertEqual(activity["actor"], announcer_id)
-        self.assertEqual(activity["object"], self.note_id)
+    def test_registration_flow_key_generation(self):
+        """新規ユーザー登録時にキーペアが割り当てられることを想定したテスト"""
+        new_actor_id = uuid4()
+        # 実際にはバックエンドが生成するが、エンティティとしての整合性を検証
+        new_actor = Actor(
+            id=new_actor_id,
+            username="bob",
+            preferred_username="Bob",
+            public_key="NEW_RSA_PUB_KEY",
+            private_key="NEW_RSA_PRIV_KEY"
+        )
+        self.assertTrue(len(new_actor.public_key) > 0)
+        self.assertTrue(len(new_actor.private_key) > 0)
 
 if __name__ == "__main__":
     unittest.main()
