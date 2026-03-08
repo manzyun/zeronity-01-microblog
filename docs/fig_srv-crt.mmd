@@ -5,10 +5,10 @@ sequenceDiagram
     actor user as Web Browser
     participant svelte as Front End
     participant flask as Back End
-    participant db as Storage@{ "type" : "database" }
-    participant other as Other ActivityPub Server@{ "type" : "boundary" }
+    participant db@{ "type" : "database" } as Storage
+    participant other@{ "type" : "boundary" } as Other ActivityPub Server
 
-    Note over web,db: ユーザーが投稿するにはログインを必須とする
+    Note over user,db: ユーザーが投稿するにはログインを必須とする
     user->>+flask: ログインリクエスト
     flask->>db: アカウントの存在の問い合わせ
     db->>flask: アカウントの存在の返答
