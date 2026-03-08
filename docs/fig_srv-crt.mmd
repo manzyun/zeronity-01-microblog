@@ -3,52 +3,73 @@ title: Server and Client Sequence
 ---
 sequenceDiagram
     actor user as Web Browser
-    participant svelte as Front End
-    participant flask as Back End
+    participant svelte as Front End (Svelte)
+    participant flask as Back End (Flask)
     participant db@{ "type" : "database" } as Storage
     participant other@{ "type" : "boundary" } as Other ActivityPub Server
 
-    Note over user,db: ユーザーが投稿するにはログインを必須とする
-    user->>+flask: ログインリクエスト
-    flask->>db: アカウントの存在の問い合わせ
-    db->>flask: アカウントの存在の返答
+    rect rgb(255, 255, 200)
+        Note over svelte, other: 新規ユーザー登録 (Registration)
+        user->>+svelte: 登録情報を入力 (username, password等)
+        svelte->>+flask: 登録リクエスト (POST /api/auth/register)
+        flask->>db: ユーザーの存在確認
+        db-->>flask: OK
+        flask->>flask: 秘密鍵・公開鍵ペアの生成 (RSA)
+        flask->>db: 新規Actorの保存 (PublicKey含む)
+        db-->>flask: 保存完了
+        flask-->>-svelte: HTTP 201 Created
+        svelte-->>-user: 登録成功表示・ログイン画面へ
+    end
 
-    alt アカウント存在無し。またはアカウント認証通らず
-        flask->>svelte: HTTPSステータス 401
-        svelte->>svelte: 401ページへ遷移
-        svelte-->>user: 認証試行失敗
-    else 認証試行成功
-        flask->>svelte: HTTPSステータス 200
-        svelte->>flask: ユーザーのタイムラインを要求
-        flask->>db: ユーザーのフォロー投稿を要求
-        flask-->>other: ユーザーのフォロー投稿を要求
-        db->>flask: フォロー投稿情報
-        other-->>flask: フォロー投稿情報
-        flask->>flask: 投稿を時系列順に生成
-        flask->>-svelte: 投稿一覧
-        svelte->>svelte: 投稿フォーム, 投稿一覧を生成
-        svelte-->>user: 投稿フォーム, 投稿一覧表示
-        par 投稿更新通知
-            svelte->>flask: 追加投稿確認要求
-            flask-->>db: 追加分の要求
-            flask-->>other: 追加分の要求
-            db-->>flask: 追加分の返答
-            other-->>flask: 追加分の返答
-            flask-->>flask: 追加分の生成
-            flask->>svelte: 追加分の投稿
-            svelte->>user: 追加分の投稿表示リンク作成
-            user->>svelte: 追加分の投稿表示を要求
-            svelte->>svelte: 追加分の投稿を投稿一覧に追記
-            svelte->>user: 投稿一覧の更新表示
-        and リプライ（投稿への返信通知）
-            svelte->>flask: リプライ確認要求
-            flask->>db: ユーザーの投稿に対する返信投稿の確認またはユーザーを指名した投稿確認
-            flask-->>other: ユーザーを指名した投稿の確認
-            db->>flask: ユーザーの投稿に対する返信の個数
-            other-->>flask: ユーザーを指名した投稿
-            flask->>flask: 返信や指名の数え上げ
-            flask->>svelte: 返信や指名の個数
-            svelte->>svelte: 返信や指名の通知の生成
-            svelte-->>user: 返信や指名の通知
+    Note over user,db: ユーザーが投稿するにはログインを必須とする
+    user->>+svelte: ログイン情報を入力
+    svelte->>+flask: ログインリクエスト (POST /api/auth/login)
+    flask->>db: アカウントの存在・認証情報の問い合わせ
+    db->>flask: 認証結果
+    
+    alt 認証失敗
+        flask-->>svelte: HTTP 401 Unauthorized
+        svelte-->>-user: ログインエラーメッセージ表示
+    else 認証成功
+        flask-->>-svelte: HTTP 200 OK (Session/JWT)
+        svelte->>svelte: メインページへ遷移
+        
+        rect rgb(200, 220, 255)
+            Note over svelte, other: タイムラインの取得
+            svelte->>+flask: タイムライン要求 (GET /api/timeline)
+            flask->>db: キャッシュされたフォロー中ユーザーの投稿を取得
+            db-->>flask: 投稿リスト
+            flask-->>-svelte: JSON (投稿一覧)
+            svelte-->>user: タイムライン表示
+        end
+
+        rect rgb(220, 255, 220)
+            Note over svelte, other: 投稿の発信 (Create Activity)
+            user->>svelte: 投稿内容を入力
+            svelte->>+flask: 投稿リクエスト (POST /api/notes)
+            flask->>db: Noteの保存
+            flask->>flask: Create Activityの生成・署名
+            flask-->>other: Activityの配送 (POST /inbox)
+            flask-->>-svelte: HTTP 201 Created
+            svelte-->>user: 投稿成功表示
+        end
+
+        rect rgb(255, 240, 200)
+            Note over svelte, other: 外部からの受信 (Inbox Delivery)
+            other->>+flask: Activity受信 (POST /inbox)
+            flask->>flask: 署名検証 (HttpSignature)
+            flask->>db: Activity/Noteの保存
+            flask-->>-other: HTTP 202 Accepted
+        end
+
+        rect rgb(240, 240, 240)
+            Note over svelte, other: リアルタイム更新通知 (通知/タイムライン)
+            par ポーリングまたはWebSocket
+                svelte->>flask: 新着投稿の確認 (GET /api/notifications)
+                flask->>db: 新着データの確認
+                db-->>flask: 通知データ
+                flask-->>svelte: 新着通知情報
+                svelte-->>user: UI更新 (新しい投稿があります)
+            end
         end
     end
