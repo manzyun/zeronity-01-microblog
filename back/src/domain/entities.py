@@ -1,3 +1,4 @@
+from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
@@ -21,6 +22,13 @@ class Actor:
         }
 
 
+class Activity(Enum):
+    """Noteタイプ"""
+    CREATE = 1
+    DELETE = 2
+    LIKE = 3
+    ANNOUNCE = 4
+    
 @dataclass(frozen=True)
 class Note:
     id: UUID
@@ -28,11 +36,11 @@ class Note:
     content: str
     published: datetime
 
-    def to_activity(self, type: str, actor_id: UUID = None) -> Dict[str, Any]:
+    def to_activity(self, type: Activity, actor_id: UUID = None) -> Dict[str, Any]:
         """NoteをActivityPub形式のアクティビティに変換する"""
         actor = actor_id if actor_id else self.author_id
         
-        if type == "Create":
+        if type == Activity.CREATE:
             return {
                 "type": "Create",
                 "actor": actor,
@@ -44,7 +52,7 @@ class Note:
                     "published": self.published.isoformat()
                 }
             }
-        elif type == "Delete":
+        elif type == Activity.DELETE:
             return {
                 "type": "Delete",
                 "actor": actor,
