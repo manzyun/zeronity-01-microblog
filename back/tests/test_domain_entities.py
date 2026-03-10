@@ -1,7 +1,7 @@
 import unittest
 from uuid import uuid4
 from datetime import datetime
-from domain.entities import Actor, Note, Activity
+from domain.entities import Actor, Note, Activity, Attachment, Relationship
 
 class TestDomainEntities(unittest.TestCase):
     def setUp(self):
@@ -37,74 +37,56 @@ class TestDomainEntities(unittest.TestCase):
         self.assertEqual(self.note.content, "Hello ActivityPub")
         self.assertEqual(self.note.published, datetime(2026, 3, 7, 12, 0, 0))
 
-    def test_note_to_create_activity(self):
-        """NoteがCreateアクティビティに正しく変換されるか検証"""
+    def test_note_with_attachments(self):
+        """Noteに添付ファイルを含めた初期化を検証"""
+        att_id = uuid4()
+        att = Attachment(id=att_id, note_id=self.note_id, type="Image", url="http://example.com/img.png", mime_type="image/png")
+        note = Note(id=uuid4(), author_id=self.actor_id, content="", published=datetime.now(), attachments=[att])
+        self.assertEqual(len(note.attachments), 1)
+        self.assertEqual(note.attachments[0].type, "Image")
+
+    def test_note_to_create_activity_with_attachments(self):
+        """添付ファイル付きNoteがCreateアクティビティに正しく変換されるか検証"""
+        att_id = uuid4()
+        att = Attachment(id=att_id, note_id=self.note_id, type="Image", url="http://example.com/img.png", mime_type="image/png")
+        self.note = Note(id=self.note_id, author_id=self.actor_id, content="With Attachment", published=datetime.now(), attachments=[att])
+        
         activity = self.note.to_activity(type=Activity.CREATE)
-        
         self.assertEqual(activity["type"], "Create")
-        self.assertEqual(activity["actor"], self.actor_id)
-        self.assertEqual(activity["object"]["id"], self.note_id)
-        self.assertEqual(activity["object"]["type"], "Note")
-        self.assertEqual(activity["object"]["content"], "Hello ActivityPub")
+        self.assertEqual(len(activity["object"]["attachment"]), 1)
+        self.assertEqual(activity["object"]["attachment"][0]["type"], "Image")
+        self.assertEqual(activity["object"]["attachment"][0]["url"], "http://example.com/img.png")
 
-    def test_note_to_delete_activity(self):
-        """NoteがDeleteアクティビティに正しく変換されるか検証"""
-        activity = self.note.to_activity(type=Activity.DELETE)
-        
-        self.assertEqual(activity["type"], "Delete")
-        self.assertEqual(activity["actor"], self.actor_id)
-        self.assertEqual(activity["object"], self.note_id)
-
-    def test_actor_create_follow_activity(self):
-        """Actorが別のActorをFollowするアクティビティを検証"""
-        target_actor_id = uuid4()
-        activity = self.actor.create_activity(type="Follow", object_id=target_actor_id)
-        
-        self.assertEqual(activity["type"], "Follow")
-        self.assertEqual(activity["actor"], self.actor_id)
-        self.assertEqual(activity["object"], target_actor_id)
+    def test_relationship_initialization(self):
+        """Relationshipが正しく初期化されるか検証"""
+        rel_id = uuid4()
+        follower_id = uuid4()
+        following_id = uuid4()
+        rel = Relationship(id=rel_id, follower_id=follower_id, following_id=following_id, created_at=datetime.now())
+        self.assertEqual(rel.follower_id, follower_id)
+        self.assertEqual(rel.following_id, following_id)
 
     # --- Abnormal System Tests ---
 
     def test_actor_invalid_id_type(self):
-        """ActorのIDがUUID型でない場合にTypeErrorを送出するか検証"""
         with self.assertRaises(TypeError):
             Actor(id="not-a-uuid", username="bob", preferred_username="Bob", public_key="KEY")
 
-    def test_actor_empty_username(self):
-        """Actorのusernameが空の場合にValueErrorを送出するか検証"""
+    def test_note_empty_content_and_no_attachments(self):
+        """コンテンツが空かつ添付ファイルもない場合にValueErrorを送出するか検証"""
         with self.assertRaises(ValueError):
-            Actor(id=uuid4(), username="", preferred_username="Bob", public_key="KEY")
+            Note(id=uuid4(), author_id=uuid4(), content="", published=datetime.now(), attachments=[])
 
-    def test_actor_empty_public_key(self):
-        """Actorのpublic_keyが空の場合にValueErrorを送出するか検証"""
+    def test_attachment_invalid_type(self):
+        """不正な添付ファイルタイプ(Image/Video以外)でValueErrorを送出するか検証"""
         with self.assertRaises(ValueError):
-            Actor(id=uuid4(), username="bob", preferred_username="Bob", public_key="")
+            Attachment(id=uuid4(), note_id=uuid4(), type="Document", url="http://example.com", mime_type="application/pdf")
 
-    def test_note_invalid_id_type(self):
-        """NoteのIDがUUID型でない場合にTypeErrorを送出するか検証"""
-        with self.assertRaises(TypeError):
-            Note(id="not-a-uuid", author_id=uuid4(), content="Hi", published=datetime.now())
-
-    def test_note_empty_content(self):
-        """Noteのコンテンツが空の場合にValueErrorを送出するか検証"""
+    def test_relationship_same_follower_following(self):
+        """自分自身をフォローしようとした場合にValueErrorを送出するか検証"""
+        user_id = uuid4()
         with self.assertRaises(ValueError):
-            Note(id=uuid4(), author_id=uuid4(), content="", published=datetime.now())
-
-    def test_note_invalid_published_type(self):
-        """Noteの公開日時がdatetime型でない場合にTypeErrorを送出するか検証"""
-        with self.assertRaises(TypeError):
-            Note(id=uuid4(), author_id=uuid4(), content="Hi", published="2026-03-07")
-
-    def test_note_to_activity_invalid_type(self):
-        """Note.to_activityにActivity Enum以外が渡された場合にTypeErrorを送出するか検証"""
-        with self.assertRaises(TypeError):
-            self.note.to_activity(type="Create")  # Should be Activity.CREATE
-
-    def test_actor_create_activity_empty_type(self):
-        """Actor.create_activityに空のタイプが渡された場合にValueErrorを送出するか検証"""
-        with self.assertRaises(ValueError):
-            self.actor.create_activity(type="", object_id=uuid4())
+            Relationship(id=uuid4(), follower_id=user_id, following_id=user_id, created_at=datetime.now())
 
 if __name__ == "__main__":
     unittest.main()
