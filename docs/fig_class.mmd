@@ -3,29 +3,64 @@ title: Class Structure
 ---
 
 classDiagram
-    class Actor {
-        +UUID id
-        +String username
-        +String preferredUsername
-        +String publicKey
-        +createNote(content)
+    namespace Domain {
+        class Actor {
+            +UUID id
+            +String username
+            +String preferredUsername
+            +String publicKey
+            +String privateKey
+            +createActivity(type, objectId)
+        }
+
+        class Note {
+            +UUID id
+            +UUID authorId
+            +String content
+            +DateTime published
+            +toActivity(type, actorId)
+        }
+
+        class ActivityType {
+            <<enumeration>>
+            CREATE
+            DELETE
+            LIKE
+            ANNOUNCE
+        }
+
+        class Relationship {
+            +UUID id
+            +UUID followerId
+            +UUID followingId
+            +DateTime createdAt
+        }
+
+        class Attachment {
+            +UUID id
+            +UUID noteId
+            +String type
+            +String url
+            +String mimeType
+        }
     }
 
-    class Note {
-        +UUID id
-        +UUID authorId
-        +String content
-        +DateTime published
-        +toActivity()
-    }
+    namespace UseCase {
+        class ActorUseCase {
+            +register(username, password)
+            +login(username, password)
+            +delete(actorId)
+            +follow(followerId, targetId)
+            +unfollow(followerId, targetId)
+        }
 
-    class Activity {
-        +UUID id
-        +String type (Create/Follow/Delete)
-        +Actor actor
-        +Object object
+        class NoteUseCase {
+            +create(actorId, content, attachments)
+            +delete(noteId, actorId)
+        }
     }
 
     Actor "1" -- "*" Note : creates
-    Activity "1" -- "1" Actor : performed_by
-    Activity "1" -- "1" Note : targets
+    Note "1" -- "*" Attachment : has
+    Actor "1" -- "*" Relationship : follows
+    Actor "1" -- "*" Relationship : followed_by

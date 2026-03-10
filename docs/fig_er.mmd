@@ -1,0 +1,42 @@
+---
+title: Entity Relationship Diagram (Normalized)
+---
+
+erDiagram
+    ACTORS ||--o{ NOTES : "creates"
+    ACTORS ||--o{ RELATIONSHIPS : "follows (follower)"
+    ACTORS ||--o{ RELATIONSHIPS : "followed_by (following)"
+    NOTES ||--o{ ATTACHMENTS : "has"
+
+    ACTORS {
+        UUID id PK
+        string username "Unique"
+        string password_hash
+        string preferred_username
+        text public_key
+        text private_key
+        datetime created_at
+    }
+
+    NOTES {
+        UUID id PK
+        UUID author_id FK
+        text content
+        datetime published_at
+    }
+
+    ATTACHMENTS {
+        UUID id PK
+        UUID note_id FK
+        string type "Image/Video"
+        string url
+        string mime_type
+    }
+
+    RELATIONSHIPS {
+        UUID id PK
+        UUID follower_id FK
+        UUID following_id FK
+        datetime created_at
+        UNIQUE(follower_id, following_id)
+    }
