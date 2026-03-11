@@ -1,29 +1,49 @@
 # Zeronity課題 SNS製作
 
+* おそらくActivityPub対応
+* Instagramをあまり使ったことがない
+  * え？　10年前のトイカメラ・セピア調の写真にサーバー側でして公開する "あの" サービスですよね？
+* テストファースト
+* ドメイン駆動設計
+
 # ディレクトリ構成
 
-* bock :: サーバーサイドプロジェクト
+* bock :: サーバーサイドプロジェクト(Domain, UseCase層)
 * docs :: アプリを構成するにあたっての文書
-* front :: Webブラウザ（クライアント）サイドプロジェクト
-* artifacts :: SQLスクリプトなど
+* front :: Webブラウザ（クライアント）サイドプロジェクト(Presentation層)
+* artifacts :: SQLスクリプトなど(Infrastructures層)
 * README.md :: 今読んでいる文書
 * AGENTS.md :: 生成AI向け文書
 
 # 開発環境
 
-## back
+## back(Domain, Usecase)
 Python製となります
 
 * パッケージマネージャー :: uv
 * フレームワーク :: Flask
 
-## front
+### テスト実行方法
+
+``` sh
+cd back
+uv run tests/ 
+```
+
+### サーバー実行方法
+
+``` sh
+cd back
+uv run python src/main.py
+```
+
+## front(Presentation)
 JavaScript製となります
 
 * パッケージマネージャー :: pnpm
 * フレームワーク :: Svelte
 
-## articafts
+## articafts(Infrastructures)
 
 DBは一旦SQLite。他、環境構築にあたっての構成管理ツール用のソースコードを置く予定
 

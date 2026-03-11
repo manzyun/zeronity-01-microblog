@@ -12,16 +12,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff",
-    "pytest"
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 88
 select = ["E", "F", "I"]
-
-[project.scripts]
-server="src/main.py"
-tests="pytest"
