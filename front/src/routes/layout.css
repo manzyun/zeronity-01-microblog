@@ -1,3 +1,44 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+@theme {
+  --color-gruvbox-dark0: #282828;
+  --color-gruvbox-dark1: #3c3836;
+  --color-gruvbox-dark2: #504945;
+  --color-gruvbox-dark3: #665c54;
+  --color-gruvbox-dark4: #7c6f64;
+  --color-gruvbox-light0: #fbf1c7;
+  --color-gruvbox-light1: #ebdbb2;
+  --color-gruvbox-light2: #d5c4a1;
+  --color-gruvbox-light3: #bdae93;
+  --color-gruvbox-light4: #a89984;
+  --color-gruvbox-red: #cc241d;
+  --color-gruvbox-green: #98971a;
+  --color-gruvbox-yellow: #d79921;
+  --color-gruvbox-blue: #458588;
+  --color-gruvbox-purple: #b16286;
+  --color-gruvbox-aqua: #689d6a;
+  --color-gruvbox-orange: #d65d0e;
+}
+
+body {
+  @apply bg-gruvbox-dark0 text-gruvbox-light1;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+a {
+  @apply text-gruvbox-blue hover:underline;
+}
+
+button {
+  @apply cursor-pointer transition-colors;
+}
+
+.card {
+  @apply bg-gruvbox-dark1 border border-gruvbox-dark2 rounded-md;
+}
+
+.input {
+  @apply bg-gruvbox-dark2 border-gruvbox-dark3 text-gruvbox-light1 focus:ring-gruvbox-blue focus:border-gruvbox-blue rounded-md;
+}

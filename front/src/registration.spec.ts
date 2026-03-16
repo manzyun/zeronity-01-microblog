@@ -1,43 +1,45 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { actorApi } from './lib/api';
 
-// Mocking the registration service or API call
-const registerUser = async (username: string, password: string): Promise<{ status: number }> => {
-  const response = await fetch('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-    headers: { 'Content-Type': 'application/json' }
+describe('Registration Flow API', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
   });
-  return { status: response.status };
-};
 
-describe('Registration Flow (Unit Test Mock)', () => {
-  it('should call register API and return 201 Created on success', async () => {
-    // Mocking global fetch
-    const fetchMock = vi.fn().mockResolvedValue({
+  it('should call register API and return response on success', async () => {
+    const mockResponse = { id: 'uuid', username: 'testuser' };
+    (fetch as any).mockResolvedValue({
       status: 201,
       ok: true,
-      json: async () => ({ message: 'Created' })
+      json: async () => mockResponse
     });
-    vi.stubGlobal('fetch', fetchMock);
 
-    const result = await registerUser('testuser', 'password123');
+    const result = await actorApi.register('testuser', 'password123');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({ username: 'testuser', password: 'password123' })
     }));
-    expect(result.status).toBe(201);
+    expect(result).toEqual(mockResponse);
   });
 
-  it('should handle registration failure (e.g., user already exists)', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      status: 409,
+  it('should throw error on registration failure', async () => {
+    (fetch as any).mockResolvedValue({
+      status: 400,
       ok: false,
-      json: async () => ({ message: 'User already exists' })
+      json: async () => ({ error: 'User already exists' })
     });
-    vi.stubGlobal('fetch', fetchMock);
 
-    const result = await registerUser('existinguser', 'password123');
-    expect(result.status).toBe(409);
+    await expect(actorApi.register('existing', 'pass')).rejects.toThrow('User already exists');
+  });
+
+  it('should throw generic error if response is not ok and no error message', async () => {
+    (fetch as any).mockResolvedValue({
+      status: 500,
+      ok: false,
+      json: async () => ({})
+    });
+
+    await expect(actorApi.register('fail', 'pass')).rejects.toThrow('Request failed');
   });
 });
