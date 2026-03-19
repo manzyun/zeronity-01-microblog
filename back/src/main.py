@@ -106,15 +106,53 @@ def login():
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
 
-@app.route("/api/notes", methods=["POST"])
-def create_note():
+@app.route("/api/notes", methods=["POST", "GET"])
+def handle_notes():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 401
     
-    data = request.json
     user_id = UUID(session["user_id"])
-    note = note_usecase.create_note(user_id, data.get("content", ""), data.get("attachments"))
-    return jsonify({"id": str(note.id), "content": note.content}), 201
+    
+    if request.method == "POST":
+        data = request.json
+        note = note_usecase.create_note(user_id, data.get("content", ""), data.get("attachments"))
+        return jsonify({"id": str(note.id), "content": note.content}), 201
+    else:
+        # Simple implementation: return all notes for now, or by author
+        # In a real app, this would be a personalized timeline
+        all_notes = []
+        for note in note_repo.notes.values():
+            author = actor_repo.get_by_id(note.author_id)
+            all_notes.append({
+                "id": str(note.id),
+                "content": note.content,
+                "published": note.published.isoformat(),
+                "author": {
+                    "username": author.username,
+                    "preferred_username": author.preferred_username
+                } if author else None,
+                "attachments": [
+                    {
+                        "type": a.type,
+                        "url": a.url,
+                        "mime_type": a.mime_type
+                    } for a in note.attachments
+                ]
+            })
+        # Sort by published date descending
+        all_notes.sort(key=lambda x: x["published"], reverse=True)
+        return jsonify(all_notes), 200
+
+@app.route("/api/actors", methods=["GET"])
+def list_actors():
+    actors = []
+    for actor in actor_repo.actors.values():
+        actors.append({
+            "id": str(actor.id),
+            "username": actor.username,
+            "preferred_username": actor.preferred_username
+        })
+    return jsonify(actors), 200
 
 @app.route("/api/notes/<note_id>", methods=["DELETE"])
 def delete_note(note_id):

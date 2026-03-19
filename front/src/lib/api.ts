@@ -28,6 +28,8 @@ export const actorApi = {
     fetchApi('/api/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) }),
   login: (username: string, password: string) => 
     fetchApi('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  list: () => 
+    fetchApi<any[]>('/api/actors'),
   follow: (targetId: string) => 
     fetchApi(`/api/follow/${targetId}`, { method: 'POST' }),
   unfollow: (targetId: string) => 
@@ -39,6 +41,8 @@ export const actorApi = {
 export const noteApi = {
   create: (content: string, attachments?: any[]) => 
     fetchApi('/api/notes', { method: 'POST', body: JSON.stringify({ content, attachments }) }),
+  list: () => 
+    fetchApi<any[]>('/api/notes'),
   delete: (noteId: string) => 
     fetchApi(`/api/notes/${noteId}`, { method: 'DELETE' }),
 };
