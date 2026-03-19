@@ -6,14 +6,14 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit(), paraglide({ project: './project.inlang', outdir: './src/lib/paraglide' })],
 
+  resolve: {
+    conditions: ['browser', 'svelte']
+  },
+
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}'],
 		globals: true,
-    browser: {
-      enabled: true,
-      name: 'chromium',
-      provider: 'playwright',
-      headless: true
-    }
+    environment: 'jsdom',
+    setupFiles: ['./vitest-setup.ts']
 	}
 });

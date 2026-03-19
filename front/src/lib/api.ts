@@ -30,6 +30,10 @@ export const actorApi = {
     fetchApi('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
   follow: (targetId: string) => 
     fetchApi(`/api/follow/${targetId}`, { method: 'POST' }),
+  unfollow: (targetId: string) => 
+    fetchApi(`/api/follow/${targetId}`, { method: 'DELETE' }),
+  deleteActor: (actorId: string) => 
+    fetchApi(`/api/actors/${actorId}`, { method: 'DELETE' }),
 };
 
 export const noteApi = {
