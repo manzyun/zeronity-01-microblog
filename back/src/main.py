@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, session
+from flask_cors import CORS
 from uuid import UUID, uuid4
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -8,6 +9,7 @@ from usecase.note import NoteUseCase, NoteRepository
 
 app = Flask(__name__)
 app.secret_key = "development-secret-key"
+CORS(app, supports_credentials=True)
 
 # --- In-Memory Repository Implementation (Mock) ---
 
