@@ -2,9 +2,12 @@ export interface ApiError {
   error: string;
 }
 
+const API_BASE = 'http://localhost:5000';
+
 export const fetchApi = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
-  const response = await fetch(url, {
+  const response = await fetch(`${API_BASE}${url}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
