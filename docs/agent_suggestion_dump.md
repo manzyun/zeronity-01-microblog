@@ -1,56 +1,56 @@
-# Zeronity: Local Development and Integration Testing
+# Zeronity: ローカル開発と統合テスト
 
-To run the project locally and verify the integration between the frontend and backend, follow these steps.
+プロジェクトをローカルで実行し、フロントエンドとバックエンドの統合を確認するには、以下の手順に従ってください。
 
-## 1. Backend Setup (Flask)
+## 1. バックエンドのセットアップ (Flask)
 
-The backend is a Flask application that uses an in-memory database for this prototype.
+バックエンドは Flask アプリケーションであり、このプロトタイプではインメモリデータベースを使用しています。
 
 ```bash
 cd back
-# Install dependencies
+# 依存関係のインストール
 uv sync
-# Run the backend (it will start on http://localhost:5000)
+# バックエンドの実行 (http://localhost:5000 で起動します)
 uv run src/main.py
 ```
 
-**Note:** CORS is enabled with `supports_credentials=True` to allow session handling from the frontend.
+**注意:** フロントエンドからのセッション管理を可能にするため、CORS は `supports_credentials=True` で有効化されています。
 
-## 2. Frontend Setup (SvelteKit)
+## 2. フロントエンドのセットアップ (SvelteKit)
 
-The frontend is a SvelteKit SPA using Gruvbox aesthetics.
+フロントエンドは Gruvbox 配色を採用した SvelteKit の SPA です。
 
 ```bash
 cd front
-# Install dependencies
+# 依存関係のインストール
 pnpm install
-# Run the frontend in development mode
+# 開発モードでフロントエンドを実行
 pnpm dev
 ```
 
-Open your browser to `http://localhost:5173`.
+ブラウザで `http://localhost:5173` を開いてください。
 
-## 3. Verification Steps
+## 3. 動作確認の手順
 
-1. **Sign Up / Login:** Go to the frontend and create a new account.
-2. **Post a Note:** Enter text and an optional image URL (e.g., `https://picsum.photos/400/300`) to see it in the feed.
-3. **Delete a Note:** Use the "Delete" button on your post.
-4. **Logout:** Use the "Log Out" button to clear your session.
+1. **新規登録 / ログイン:** フロントエンドにアクセスし、新しいアカウントを作成します。
+2. **ノートの投稿:** テキストと任意の画像 URL（例: `https://picsum.photos/400/300`）を入力し、フィードに表示されることを確認します。
+3. **ノートの削除:** 自分の投稿にある「削除（Delete）」ボタンを使用します。
+4. **ログアウト:** 「ログアウト（Log Out）」ボタンを使用してセッションをクリアします。
 
-## 4. Automated Integration Testing (Playwright)
+## 4. 自動統合テスト (Playwright)
 
-You can run E2E tests to verify the full flow:
+一連の流れを検証するために E2E テストを実行できます。
 
 ```bash
 cd front
-# Ensure the backend is running in another terminal
+# 別のターミナルでバックエンドが起動していることを確認してください
 pnpm test:e2e
 ```
 
-Current E2E tests are located in `front/e2e/`.
+現在の E2E テストは `front/e2e/` に配置されています。
 
-## Suggestions for Further Improvement
+## 今後の改善に向けた提案
 
-* **Persistent Database:** Replace `InMemoryRepository` with a real database (e.g., SQLite via SQLAlchemy) for data persistence.
-* **Image Uploads:** Implement actual file uploads instead of just linking to external URLs.
-* **ActivityPub Integration:** Implement the actual ActivityPub protocol for federation.
+* **永続データベース:** データの永続化のため、`InMemoryRepository` を実際のデータベース（例: SQLAlchemy 経由の SQLite）に置き換える。
+* **画像のアップロード:** 外部 URL へのリンクだけでなく、実際のファイルアップロード機能を実装する。
+* **ActivityPub の統合:** フェデレーション（連合）のための実際の ActivityPub プロトコルを実装する。
